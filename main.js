@@ -202,9 +202,6 @@ var acceleration = 1000000;
 var maxSpeed = 200;
 
 var ASSET_MANAGER = new AssetManager();
-ASSET_MANAGER.queueDownload("/Users/Cuong_Tran/Desktop/TCSS491/assignment2/img/karenjump.png");
-ASSET_MANAGER.queueDownload("/Users/Cuong_Tran/Desktop/TCSS491/assignment2/img/karenrun.png");
-ASSET_MANAGER.queueDownload("/Users/Cuong_Tran/Desktop/TCSS491/assignment2/img/karenpunch.png");
 ASSET_MANAGER.downloadAll(function () {
     console.log("starting up da sheild");
     var canvas = document.getElementById('gameWorld');
@@ -225,8 +222,6 @@ ASSET_MANAGER.downloadAll(function () {
 		var circle = new Circle(gameEngine);
 		gameEngine.addEntity(circle);
     }
-//    var karen = new Karen(gameEngine)
-//    gameEngine.addEntity(karen)
     gameEngine.init(ctx);
     gameEngine.start();
 });
