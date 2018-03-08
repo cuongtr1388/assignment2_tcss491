@@ -1,116 +1,24 @@
 
-// GameBoard code below
-function Animation(spriteSheet, startX, startY, frameWidth, frameHeight, frameDuration, frames, loop, reverse) {
-    this.spriteSheet = spriteSheet;
-    this.startX = startX;
-    this.startY = startY;
-    this.frameWidth = frameWidth;
-    this.frameDuration = frameDuration;
-    this.frameHeight = frameHeight;
-    this.frames = frames;
-    this.totalTime = frameDuration * frames;
-    this.elapsedTime = 0;
-    this.loop = loop;
-    this.reverse = reverse;
-}
-Animation.prototype.drawFrame = function (tick, ctx, x, y, scaleBy) {
-    var scaleBy = scaleBy || 1;
-    this.elapsedTime += tick;
-    if (this.loop) {
-        if (this.isDone()) {
-            this.elapsedTime = 0;
-        }
-    } else if (this.isDone()) {
-        return;
-    }
-    var index = this.reverse ? this.frames - this.currentFrame() - 1 : this.currentFrame();
-    var vindex = 0;
-    if ((index + 1) * this.frameWidth + this.startX > this.spriteSheet.width) {
-        index -= Math.floor((this.spriteSheet.width - this.startX) / this.frameWidth);
-        vindex++;
-    }
-    while ((index + 1) * this.frameWidth > this.spriteSheet.width) {
-        index -= Math.floor(this.spriteSheet.width / this.frameWidth);
-        vindex++;
-    }
-
-    var locX = x;
-    var locY = y;
-    var offset = vindex === 0 ? this.startX : 0;
-    ctx.drawImage(this.spriteSheet,
-                  index * this.frameWidth + offset, vindex * this.frameHeight + this.startY,  // source from sheet
-                  this.frameWidth, this.frameHeight,
-                  locX, locY,
-                  this.frameWidth * scaleBy,
-                  this.frameHeight * scaleBy);
-}
-
-Animation.prototype.currentFrame = function () {
-    return Math.floor(this.elapsedTime / this.frameDuration);
-}
-
-Animation.prototype.isDone = function () {
-    return (this.elapsedTime >= this.totalTime);
-}
 function distance(a, b) {
     var dx = a.x - b.x;
     var dy = a.y - b.y;
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-function Karen(game) {
-    this.animation = new Animation(ASSET_MANAGER.getAsset("/Users/Cuong_Tran/Desktop/TCSS491/assignment2/img/karenrun.png")
-    														,0, 0, 45, 47, 0.2, 8, true, false);
-    this.jumpAnimation = new Animation(ASSET_MANAGER.getAsset("/Users/Cuong_Tran/Desktop/TCSS491/assignment2/img/karenjump.png")
-    														,0,0, 38.75, 76, 0.3, 4, false, false);
-    this.punchAnimation = new Animation(ASSET_MANAGER.getAsset("/Users/Cuong_Tran/Desktop/TCSS491/assignment2/img/karenpunch.png")
-			,0,0, 60, 52, 0.1, 9, false, false);
-    this.jumping = false;
-    this.punch = false;
-    this.speed = 100;
-    this.radius = 100;
-    this.ground = 440;
-    Entity.call(this, game, 0, 440);
-}
-Karen.prototype = new Entity();
-Karen.prototype.constructor = Karen;
-Karen.prototype.update = function () {
-if (this.game.b) this.punch = true;
-    if (this.punch) {
-    		if (this.punchAnimation.isDone()) {
-            this.punchAnimation.elapsedTime = 0;         
-            this.punch = false;
-        }
-    		this.punchAnimation;
-    		
-    } else {
-    		this.x += this.game.clockTick * this.speed;
-
-    }
-    if (this.x > 800) this.x = -10;    
-    if (this.x < 0) this.x = 0;  
-    Entity.prototype.update.call(this);
-}
-Karen.prototype.draw = function (ctx) {
-    if (this.punch) {
-    		this.punchAnimation.drawFrame(this.game.clockTick, ctx, this.x , this.y);
-    }
-    else {
-        this.animation.drawFrame(this.game.clockTick, ctx, this.x, this.y);
-    }
-    Entity.prototype.draw.call(this);
-}
-
-
 //////////////////////////////////////////////////////////////////////
 function Circle(game) {
     this.player = 1;
-    this.radius = 10;
+    this.radius = 20;
     this.visualRadius = 200;
+    this.isCircle = true;
+    
     this.colors = ["Red", "Green", "Blue", "White"];
     this.setNotIt();
+    
     Entity.call(this, game, this.radius + Math.random() * (800 - this.radius * 2), this.radius + Math.random() * (800 - this.radius * 2));
-
+    this.box = new BoundingBox(this.x-this.radius, this.y - this.radius, this.radius*2,this.radius*2 );
+    //this.prev = {top: this.box.top, bottom: this.box.bottom, left : this.box.left, right: this.box.right };
+    this.prev = {x: this.box.x, y: this.box.y};
     this.velocity = { x: Math.random() * 1000, y: Math.random() * 1000 };
     if (Math.random() > 0.5) this.velocity.x = -this.velocity.x;
     if (Math.random() > 0.5) this.velocity.y = -this.velocity.y;
@@ -138,7 +46,7 @@ Circle.prototype.setNotIt = function () {
 };
 
 Circle.prototype.collide = function (other) {
-    return distance(this, other) < this.radius + other.radius;
+    return distance(this, other) < this.radius;
 };
 
 Circle.prototype.collideLeft = function () {
@@ -158,12 +66,9 @@ Circle.prototype.collideBottom = function () {
 };
 
 Circle.prototype.update = function () {
-    Entity.prototype.update.call(this);
+    
  //  console.log(this.velocity);
-
-    this.x += this.velocity.x * this.game.clockTick;
-    this.y += this.velocity.y * this.game.clockTick;
-
+    
     if (this.collideLeft() || this.collideRight()) {
         this.velocity.x = -this.velocity.x * friction;
         if (this.collideLeft()) this.x = this.radius;
@@ -179,72 +84,108 @@ Circle.prototype.update = function () {
         this.x += this.velocity.x * this.game.clockTick;
         this.y += this.velocity.y * this.game.clockTick;
     }
-
+    this.box = new BoundingBox(this.x-this.radius, this.y - this.radius, this.radius*2,this.radius*2 );
     for (var i = 0; i < this.game.entities.length; i++) {
         var ent = this.game.entities[i];
-        if (ent !== this && this.collide(ent)) {
-            var temp = { x: this.velocity.x, y: this.velocity.y };
+        if (ent !== this && ent.isCircle) {
+	        if (ent !== this && this.collide(ent)) {
+	            var temp = { x: this.velocity.x, y: this.velocity.y };
+	
+	            var dist = distance(this, ent);
+	            var delta = this.radius + ent.radius - dist;
+	            var difX = (this.x - ent.x)/dist;
+	            var difY = (this.y - ent.y)/dist;
+	
+	            this.x += difX * delta / 2;
+	            this.y += difY * delta / 2;
+	            ent.x -= difX * delta / 2;
+	            ent.y -= difY * delta / 2;
+	
+	            this.velocity.x = ent.velocity.x * friction;
+	            this.velocity.y = ent.velocity.y * friction;
+	            ent.velocity.x = temp.x * friction;
+	            ent.velocity.y = temp.y * friction;
+	            this.x += this.velocity.x * this.game.clockTick;
+	            this.y += this.velocity.y * this.game.clockTick;
+	            ent.x += ent.velocity.x * this.game.clockTick;
+	            ent.y += ent.velocity.y * this.game.clockTick;
+	            if (this.it) {
+	                this.setNotIt();
+	                ent.setIt();
+	            }
+	            else if (ent.it) {
+	                this.setIt();
+	                ent.setNotIt();
+	            }
+	        }
 
-            var dist = distance(this, ent);
-            var delta = this.radius + ent.radius - dist;
-            var difX = (this.x - ent.x)/dist;
-            var difY = (this.y - ent.y)/dist;
-
-            this.x += difX * delta / 2;
-            this.y += difY * delta / 2;
-            ent.x -= difX * delta / 2;
-            ent.y -= difY * delta / 2;
-
-            this.velocity.x = ent.velocity.x * friction;
-            this.velocity.y = ent.velocity.y * friction;
-            ent.velocity.x = temp.x * friction;
-            ent.velocity.y = temp.y * friction;
-            this.x += this.velocity.x * this.game.clockTick;
-            this.y += this.velocity.y * this.game.clockTick;
-            ent.x += ent.velocity.x * this.game.clockTick;
-            ent.y += ent.velocity.y * this.game.clockTick;
-            if (this.it) {
-                this.setNotIt();
-                ent.setIt();
-            }
-            else if (ent.it) {
-                this.setIt();
-                ent.setNotIt();
-            }
+	        if (ent != this && this.collide({ x: ent.x, y: ent.y, radius: this.visualRadius })) {
+	            var dist = distance(this, ent);
+	            if (this.it && dist > this.radius + ent.radius + 10) {
+	                var difX = (ent.x - this.x)/dist;
+	                var difY = (ent.y - this.y)/dist;
+	                this.velocity.x += difX * acceleration / (dist*dist);
+	                this.velocity.y += difY * acceleration / (dist * dist);
+	                var speed = Math.sqrt(this.velocity.x*this.velocity.x + this.velocity.y*this.velocity.y);
+	                if (speed > maxSpeed) {
+	                    var ratio = maxSpeed / speed;
+	                    this.velocity.x *= ratio;
+	                    this.velocity.y *= ratio;
+	                }
+	            }
+	            if (ent.it && dist > this.radius + ent.radius) {
+	                var difX = (ent.x - this.x) / dist;
+	                var difY = (ent.y - this.y) / dist;
+	                this.velocity.x -= difX * acceleration / (dist * dist);
+	                this.velocity.y -= difY * acceleration / (dist * dist);
+	                var speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+	                if (speed > maxSpeed) {
+	                    var ratio = maxSpeed / speed;
+	                    this.velocity.x *= ratio;
+	                    this.velocity.y *= ratio;
+	                }
+	            }
+	        }
+        this.x += this.velocity.x * this.game.clockTick;
+        this.y += this.velocity.y * this.game.clockTick;
         }
-
-        if (ent != this && this.collide({ x: ent.x, y: ent.y, radius: this.visualRadius })) {
-            var dist = distance(this, ent);
-            if (this.it && dist > this.radius + ent.radius + 10) {
-                var difX = (ent.x - this.x)/dist;
-                var difY = (ent.y - this.y)/dist;
-                this.velocity.x += difX * acceleration / (dist*dist);
-                this.velocity.y += difY * acceleration / (dist * dist);
-                var speed = Math.sqrt(this.velocity.x*this.velocity.x + this.velocity.y*this.velocity.y);
-                if (speed > maxSpeed) {
-                    var ratio = maxSpeed / speed;
-                    this.velocity.x *= ratio;
-                    this.velocity.y *= ratio;
-                }
-            }
-            if (ent.it && dist > this.radius + ent.radius) {
-                var difX = (ent.x - this.x) / dist;
-                var difY = (ent.y - this.y) / dist;
-                this.velocity.x -= difX * acceleration / (dist * dist);
-                this.velocity.y -= difY * acceleration / (dist * dist);
-                var speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-                if (speed > maxSpeed) {
-                    var ratio = maxSpeed / speed;
-                    this.velocity.x *= ratio;
-                    this.velocity.y *= ratio;
-                }
-            }
+        else if(this !== ent && !ent.isCircle && this.box.hasCollided(ent.box)) {
+        		//if(ent !== this && !ent.isCircle){
+        		
+	    	 		if(this.prev.y < this.box.y && this.box.y + this.box.height > ent.box.y && this.prev.y + this.box.height <= ent.box.y){
+					console.log("collide bottom");
+					this.velocity.y = - this.velocity.y;
+		        } else if(this.prev.y > this.box.y && this.box.y < ent.box.y + ent.box.height && this.prev.y >= ent.box.y + ent.box.height) {
+		        		console.log("collide top");
+		        		this.velocity.y = - this.velocity.y;
+		        } else if(this.prev.x < this.box.x && this.box.x + this.box.width > ent.box.x) {
+		        		//console.log("collide right");
+		        		this.velocity.x = -this.velocity.x;
+		        } else if(this.prev.x > this.box.x && this.box.x < ent.box.x + ent.box.width) {
+		        		//console.log("collide left");
+		        		this.velocity.x = -this.velocity.x;
+		        }
         }
-    }
+    
+    
+	}
+	
+//    this.x -=  2 *  this.velocity.x * this.game.clockTick;
+// 	this.y -=  2 * this.velocity.y * this.game.clockTick;
 
-
+//    this.prev.top = this.box.top;
+//    this.prev.bottom = this.box.bottom;
+//    this.prev.left = this.box.left;
+//    this.prev.right = this.box.right;
+    
+ 	this.prev.x = this.box.x;
+    this.prev.y = this.box.y;
+    
+    
     this.velocity.x -= (1 - friction) * this.game.clockTick * this.velocity.x;
     this.velocity.y -= (1 - friction) * this.game.clockTick * this.velocity.y;
+    this.box = new BoundingBox(this.x-this.radius, this.y - this.radius, this.radius*2,this.radius*2 );
+    Entity.prototype.update.call(this);
 };
 
 Circle.prototype.draw = function (ctx) {
@@ -253,9 +194,8 @@ Circle.prototype.draw = function (ctx) {
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
     ctx.fill();
     ctx.closePath();
+    this.box.draw(ctx);
 };
-
-
 // the "main" code begins here
 var friction = 1;
 var acceleration = 1000000;
@@ -272,14 +212,21 @@ ASSET_MANAGER.downloadAll(function () {
 
     var gameEngine = new GameEngine();
     var circle = new Circle(gameEngine);
+    var rect = new Rectangle(gameEngine);
+    gameEngine.addEntity(rect);
     circle.setIt();
     gameEngine.addEntity(circle);
-    for (var i = 0; i < 12; i++) {
-        circle = new Circle(gameEngine);
-        gameEngine.addEntity(circle);
+    
+    for (var i = 0; i < 1; i++) {
+    		var rect = new Rectangle(gameEngine);
+    		gameEngine.addEntity(rect);
     }
-    var karen = new Karen(gameEngine)
-    gameEngine.addEntity(karen)
+    for (var i = 0; i < 3; i++) {
+		var circle = new Circle(gameEngine);
+		gameEngine.addEntity(circle);
+    }
+//    var karen = new Karen(gameEngine)
+//    gameEngine.addEntity(karen)
     gameEngine.init(ctx);
     gameEngine.start();
 });
