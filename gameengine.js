@@ -45,6 +45,24 @@ GameEngine.prototype.init = function (ctx) {
     this.surfaceHeight = this.ctx.canvas.height;
     this.startInput();
     this.timer = new Timer();
+    
+    this.socket = io.connect("http://24.16.255.56:8888");
+
+    this.socket.on("load", function (data) {
+        console.log(data);
+    });
+
+    console.log("starting up da sheild");
+
+    this.socket.on("connect", function () {
+        console.log("Socket connected.")
+    });
+    this.socket.on("disconnect", function () {
+        console.log("Socket disconnected.")
+    });
+    this.socket.on("reconnect", function () {
+        console.log("Socket reconnected.")
+    });
     console.log('game initialized');
 }
 
