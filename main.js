@@ -224,4 +224,33 @@ ASSET_MANAGER.downloadAll(function () {
     }
     gameEngine.init(ctx);
     gameEngine.start();
+	//Load canvas id for save and load button.
+    var saveButton = document.getElementById('save');
+    var loadButton = document.getElementById('load');
+    
+    //Declare save button function and add action listener.
+    saveButton.addEventListener("click", function(d) {   	
+    		var saveData = [];
+        for(var i = 0; i < gameEngine.entities.length; i++) {
+	        	var ent = gameEngine.entities[i];
+	    		var saveEnt = { x: ent.x, y: ent.y, velocity: ent.velocity, color: ent.color};
+	    			saveData.push(saveEnt);
+        }
+        console.log(saveData.length);
+        gameEngine.socket.emit("save", { studentname: "Cuong Tran", statename: "aState", data: saveData });
+        
+    }, false);
+    //Declare load button function and add action listener.
+    loadButton.addEventListener("click", function(d) {
+    		gameEngine.socket.emit("load", { studentname: "Cuong Tran", statename: "aState"});
+    }, false);
+    
+    gameEngine.socket.on("load", function(d){
+    	for(var i = 0; i < gameEngine.entities.length; i++) {
+    		gameEngine.entities[i].x = d.data[i].x;
+    		gameEngine.entities[i].y = d.data[i].y;
+    		gameEngine.entities[i].velocity = d.data[i].velocity;
+    		gameEngine.entities[i].color = d.data[i].color;
+    	}
+    });
 });
