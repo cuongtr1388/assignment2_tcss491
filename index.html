@@ -3,8 +3,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Robot Tag</title>
-    
+    <title>Moving Rectangle</title>
+    <script type="text/javascript" src="http://24.16.255.56:8888/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="assetmanager.js"></script>
     <script type="text/javascript" src="gameengine.js"></script>
     <script type="text/javascript" src="main.js"></script>
@@ -12,6 +12,8 @@
     <script type="text/javascript" src="rectangle.js"></script>
 </head>
 <body>
-    <canvas id="gameWorld" width="800" height="800" style="border: 1px solid white; background: black"></canvas>
+    <canvas id="gameWorld" width="800" height="800" style="border: 1px solid white; background: black"></canvas><br>
+    <button style="top:1000px; left:50px;"  id ="save">Save</button>
+    <button style="top:1200px; left:50px;"  id ="load">Load</button>
 </body>
 </html>
